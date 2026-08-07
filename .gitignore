@@ -5,3 +5,4 @@ __pycache__
 .env
 1
 dfDate.py.bak
+*.csv

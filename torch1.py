@@ -36,7 +36,7 @@ evalY = torch.tensor(a[:, None], dtype=torch.float32)
 
 model = lstmModel(input_dim=len(x[0][0]), hidden_dim=45, layer_dim=2, output_dim=1)
 criterion = nn.SmoothL1Loss(reduction="sum")
-optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=0.25)
+optimizer = torch.optim.AdamW(model.parameters(), lr=0.005, weight_decay=0.25)
 #optimizer = torch.optim.RMSprop(model.parameters(), lr=0.005)
 
 

@@ -2,6 +2,13 @@ import pandas as pd
 from priceDf import getPriceDf
 from dateRange import getDateRange
 import numpy as np
+import os
+
+def saveSeq():
+    nofillDf = getPriceDf(2015, 2026, infill=False)
+    #infillDf = getPriceDf(2015, 2026, infill=True)
+
+    nofillDf.to_csv('nofillDf.csv')                       #infillDf.to_csv('infillDf.csv')
 
 def createSequences(data, seqLen, multi):
     xs, ys = [], []
@@ -109,7 +116,17 @@ def getSequence(df):
 
 def sequencesPercent(seqLen, multi=False):
     
-    nofillDf = getPriceDf(2015, 2026, infill=False)
+    if os.path.exists('nofillDf.csv'):
+        nofillDf = pd.read_csv('nofillDf.csv')
+    else:
+        saveSeq()
+        nofillDf = pd.read_csv('nofillDf.csv')
+
+    nofillDf = nofillDf.rename(columns={nofillDf.columns[0]: 'date'}) 
+    
+    nofillDf['date'] = pd.to_datetime(nofillDf['date'])
+
+    nofillDf = nofillDf.set_index('date')
 
     seq, evalSeq = getSequence(nofillDf)
 
