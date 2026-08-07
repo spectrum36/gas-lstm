@@ -1,0 +1,4 @@
+HOST=(url to your influxdb instance)
+DATABASE=(influxdb database)
+TOKEN=(influxdb token)
+KEY=(your eia api key, they're free)
