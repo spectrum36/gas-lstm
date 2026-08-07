@@ -1,0 +1,6 @@
+plot*
+eia*
+__pycache__
+.venv
+.env
+1
