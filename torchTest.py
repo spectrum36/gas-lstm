@@ -1,4 +1,3 @@
-from sequence import sequences
 from sequencePercent import sequencesPercent
 import numpy as np
 import torch
@@ -26,7 +25,6 @@ class lstmModel(nn.Module):
 
 seqLen = 10
 
-#x, y, z, a = sequences(seqLen, multi=True)
 x, y, z, a = sequencesPercent(seqLen, multi=True)
 
 trainX = torch.tensor(x, dtype=torch.float32)
