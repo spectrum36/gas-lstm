@@ -9,27 +9,21 @@ def saveSeq():
 
     nofillDf.to_csv('nofillDf.csv')                       #infillDf.to_csv('infillDf.csv')
 
-def createSequences(data, seqLen, multi):
+def createSequences(data, seqLen):
     xs, ys = [], []
 
     for i in range(len(data) - seqLen):
-        if multi == True:
-            x = data[i:(i + seqLen)]
-        else:
-            x = []
-            z = data[i:(i + seqLen)]
-            for p in z:
-                x.append(p[1])
+        x = data[i:(i + seqLen)]
         y = data[i + seqLen][0]
         xs.append(x)
         ys.append(y)
 
     return np.array(xs), np.array(ys)
 
-def getSequence(df):
+def getSequence(df, weatherDf):
     indexDate = "2016-01-01"
 
-    gas = "EMM_EPMR_PTE_YORD_DPG"
+    gas = "EMM_EPM0_PTE_STX_DPG"
     gasCols = df.filter(like=gas)
     column = gasCols.columns
     gasCols = gasCols.dropna()
@@ -40,33 +34,46 @@ def getSequence(df):
     
     #print(gasCols)
 
-    spotPrice = ["RWTC", "RBRTE", "WCRSTUS1", "WDISTUS1", "WTTIMUS2", "EER_EPMRU_PF4_Y35NY_DPG", "EER_EPD2DC_PF4_Y05LA_DPG"] 
+    spotPrice = ["RWTC", "RBRTE", "WCRSTUS1", "WDISTUS1", "WTTIMUS2"]
     spotDfs = []
 
     for i in spotPrice:
         spotCol = df.filter(like=i)
         spotCol = spotCol.sort_index(ascending=True)
-        spotCol = spotCol.rolling(window='7D').mean()
+        #spotCol = spotCol.rolling(window='7D').mean()
         spotCol = spotCol.resample("W-MON").mean()
-        #spotCol = spotCol.sort_index(ascending=False)
+        spotCol = spotCol.sort_index(ascending=False)
         spotCol = spotCol.pct_change(periods=-1)
         spotCol = spotCol.sort_index(ascending=False)
         #print(spotCol)
         spotDfs.append(spotCol)
 
     spotCols = pd.concat(spotDfs, axis=1)
-
     combCols = gasCols.merge(spotCols, how="inner", left_index=True, right_index=True)
     combCols = combCols.sort_index(ascending=True)
     
     #multiply every value for scaling reasons
     combCols = combCols.mul(100)
     
+    #insert weather data
+    
+    weather = ["albany_temp"]
+    wtDfs = []
+    for i in weather:
+        wtCol = weatherDf.filter(like=i)
+        wtCol = wtCol.sort_index(ascending=True)
+        wrCol = wtCol.resample("W-MON").mean()
+        wtDfs.append(wtCol)
+    
+    weatherCols = pd.concat(wtDfs, axis=1)
+    weatherCols = (weatherCols-weatherCols.mean())/weatherCols.std()
+    combCols = combCols.merge(weatherCols, how="inner", left_index=True, right_index=True)
+    
     #generate seasonality columns
     dates = pd.date_range(start="2016-1-1", end="2026-1-1", freq="D")
 
     dateDf = pd.DataFrame({"date": dates})
-    print(dateDf)
+    
     dateDf = dateDf.set_index("date")
 
     dateDf["dayOfYear"] = dateDf.index.day_of_year
@@ -80,7 +87,8 @@ def getSequence(df):
     combCols = combCols.merge(dateDf, how="inner", right_index=True, left_index=True)
 
     print(combCols)
-    
+ 
+    #seperate into a training and evaluation set
     trainMask =  (combCols.index >= "2016-01-01") & (combCols.index < "2025-01-01")
     evalMask = (combCols.index >= "2025-01-01") & (combCols.index <= "2026-01-01")
 
@@ -113,8 +121,10 @@ def getSequence(df):
 
 
 
-def sequencesPercent(seqLen, multi=False):
+def sequencesPercent(seqLen):
     
+    weatherDf = pd.read_csv('weather.csv')
+
     if os.path.exists('nofillDf.csv'):
         nofillDf = pd.read_csv('nofillDf.csv')
     else:
@@ -122,20 +132,25 @@ def sequencesPercent(seqLen, multi=False):
         nofillDf = pd.read_csv('nofillDf.csv')
 
     nofillDf = nofillDf.rename(columns={nofillDf.columns[0]: 'date'}) 
-    
     nofillDf['date'] = pd.to_datetime(nofillDf['date'])
-
     nofillDf = nofillDf.set_index('date')
 
-    seq, evalSeq = getSequence(nofillDf)
+    weatherDf = weatherDf.rename(columns={weatherDf.columns[0]: 'date'})
+    weatherDf['date'] = pd.to_datetime(weatherDf['date'])
+    weatherDf = weatherDf.set_index('date')
+    weatherDf.index = weatherDf.index.tz_localize(None)
+    
+    print(weatherDf)
 
-    seqTrainX, seqTrainY = createSequences(seq, seqLen, multi)
+    seq, evalSeq = getSequence(nofillDf, weatherDf)
 
-    seqEvalX, seqEvalY = createSequences(evalSeq, seqLen, multi)
+    seqTrainX, seqTrainY = createSequences(seq, seqLen)
+
+    seqEvalX, seqEvalY = createSequences(evalSeq, seqLen)
     
     #print(seqTrainX)
     #print(seqEvalX)
 
     return(seqTrainX, seqTrainY, seqEvalX, seqEvalY)
 
-#sequencesPercent(10, multi=True)
+#sequencesPercent(10)

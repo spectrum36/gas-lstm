@@ -25,17 +25,17 @@ class lstmModel(nn.Module):
 seqLen = 10
 #seqLen = 4
 #seqLen = 2
-x, y, z, a = sequencesPercent(seqLen, multi=True)
+x, y, z, a = sequencesPercent(seqLen)
 
 trainX = torch.tensor(x, dtype=torch.float32)
 trainY = torch.tensor(y[:, None], dtype=torch.float32)
 evalX = torch.tensor(z, dtype=torch.float32)
 evalY = torch.tensor(a[:, None], dtype=torch.float32)
 
-model = lstmModel(input_dim=len(x[0][0]), hidden_dim=45, layer_dim=2, output_dim=1)
-criterion = nn.SmoothL1Loss(reduction="sum")
-optimizer = torch.optim.AdamW(model.parameters(), lr=0.005, weight_decay=0.25)
-#optimizer = torch.optim.RMSprop(model.parameters(), lr=0.005)
+model = lstmModel(input_dim=len(x[0][0]), hidden_dim=32, layer_dim=1, output_dim=1)
+criterion = nn.MSELoss(reduction="mean")
+optimizer = torch.optim.AdamW(model.parameters(), lr=0.001, weight_decay=0.005)
+#optimizer = torch.optim.RMSprop(model.parameters(), lr=0.01, weight_decay=0.05)
 
 
 

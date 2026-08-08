@@ -25,7 +25,7 @@ class lstmModel(nn.Module):
 
 seqLen = 10
 
-x, y, z, a = sequencesPercent(seqLen, multi=True)
+x, y, z, a = sequencesPercent(seqLen)
 
 trainX = torch.tensor(x, dtype=torch.float32)
 trainY = torch.tensor(y[:, None], dtype=torch.float32)
