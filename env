@@ -2,3 +2,5 @@ HOST=(url to your influxdb instance)
 DATABASE=(influxdb database)
 TOKEN=(influxdb token)
 KEY=(your eia api key, they're free)
+WEATHER=(influxdb weather database)
+WIKI=(wikipedia user agent string, use format "MyProject (user@email.com)"
