@@ -5,5 +5,5 @@ __pycache__
 .venv
 .env
 1
-dfDate.py.bak
+*.bak
 *.csv
