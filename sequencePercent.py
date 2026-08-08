@@ -5,13 +5,10 @@ import os
 
 def saveSeq():
     nofillDf = getPriceDf(2015, 2026, infill=False)
-    #infillDf = getPriceDf(2015, 2026, infill=True)
-
-    nofillDf.to_csv('nofillDf.csv')                       #infillDf.to_csv('infillDf.csv')
+    nofillDf.to_csv('nofillDf.csv')
 
 def createSequences(data, seqLen):
     xs, ys = [], []
-
     for i in range(len(data) - seqLen):
         x = data[i:(i + seqLen)]
         y = data[i + seqLen][0]
@@ -20,7 +17,7 @@ def createSequences(data, seqLen):
 
     return np.array(xs), np.array(ys)
 
-def getSequence(df, weatherDf):
+def getSequence(df, weatherDf, wtr):
     indexDate = "2016-01-01"
 
     gas = "EMM_EPM0_PTE_STX_DPG"
@@ -56,18 +53,18 @@ def getSequence(df, weatherDf):
     combCols = combCols.mul(100)
     
     #insert weather data
+    if wtr == True:    
+        weather = ["albany_temp"]
+        wtDfs = []
+        for i in weather:
+            wtCol = weatherDf.filter(like=i)
+            wtCol = wtCol.sort_index(ascending=True)
+            wrCol = wtCol.resample("W-MON").mean()
+            wtDfs.append(wtCol)
     
-    weather = ["albany_temp"]
-    wtDfs = []
-    for i in weather:
-        wtCol = weatherDf.filter(like=i)
-        wtCol = wtCol.sort_index(ascending=True)
-        wrCol = wtCol.resample("W-MON").mean()
-        wtDfs.append(wtCol)
-    
-    weatherCols = pd.concat(wtDfs, axis=1)
-    weatherCols = (weatherCols-weatherCols.mean())/weatherCols.std()
-    combCols = combCols.merge(weatherCols, how="inner", left_index=True, right_index=True)
+        weatherCols = pd.concat(wtDfs, axis=1)
+        weatherCols = (weatherCols-weatherCols.mean())/weatherCols.std()
+        combCols = combCols.merge(weatherCols, how="inner", left_index=True, right_index=True)
     
     #generate seasonality columns
     dates = pd.date_range(start="2016-1-1", end="2026-1-1", freq="D")
@@ -121,7 +118,7 @@ def getSequence(df, weatherDf):
 
 
 
-def sequencesPercent(seqLen):
+def sequencesPercent(seqLen, wtr=True):
     
     weatherDf = pd.read_csv('weather.csv')
 
@@ -139,10 +136,8 @@ def sequencesPercent(seqLen):
     weatherDf['date'] = pd.to_datetime(weatherDf['date'])
     weatherDf = weatherDf.set_index('date')
     weatherDf.index = weatherDf.index.tz_localize(None)
-    
-    print(weatherDf)
 
-    seq, evalSeq = getSequence(nofillDf, weatherDf)
+    seq, evalSeq = getSequence(nofillDf, weatherDf, wtr)
 
     seqTrainX, seqTrainY = createSequences(seq, seqLen)
 
