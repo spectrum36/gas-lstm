@@ -6,7 +6,7 @@ import os
 import math
 import time
 
-def trainLstm(epochs, lossFunc, optimFunc, trainX, trainY, model, singleRun=True, plot=False):
+def trainLstm(epochs, lossFunc, optimFunc, trainX, trainY, model, singleRun=True):
     h0, c0 = None, None
 
     #makes it so that epoch loss reports get less common the more epochs there are
@@ -30,8 +30,6 @@ def trainLstm(epochs, lossFunc, optimFunc, trainX, trainY, model, singleRun=True
             if (epoch + 1) % epochReport == 0 or epoch == 0:
                 print(f"epoch [{epoch + 1}/{epochs}], loss: {loss.item():.4f}")
     
-    if plot:
-        return(model, loss, lossList)
-    else:
-        return(model, loss)
+    return(model, loss, lossList)
+    return(model, loss)
 
